@@ -1,7 +1,6 @@
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 
-
 class AdaBoost:
     def __init__(self, n_estimators):
         self.n_estimators = n_estimators
@@ -17,30 +16,32 @@ class AdaBoost:
             estimator.fit(x, y, sample_weight=weights)  # Treinando o estimador com os pesos
 
             y_pred = estimator.predict(x)
-            error = np.sum(weights * (y_pred != y))  # Calculando o erro ponderado
 
-            if error > 0.5:
-                break  # Se o erro for maior que 0.5, interrompe o loop
-            elif error == 0:
-                error += 1e-5  # Se o erro for 0, adiciona um valor pequeno para evitar divisão por 0
+            error =  # Calculando o erro ponderado
+            if error >= 0.5:
+                break  # Se o erro for maior ou igual a 0.5, interrompe o loop
 
-            estimator_weight = 0.5 * np.log((1/error) - 1)  # Calculando o peso do estimador
+            if error == 0:
+                error = 1e-5  # Se o erro for 0, adiciona um valor pequeno para evitar divisão por 0
 
-            weights *= np.exp(-estimator_weight * np.squeeze(y) * np.squeeze(y_pred))  # Atualizando os pesos
+            estimator_weight = 0.5 * np.log((1 / error) - 1)  # Calculando o peso do estimador
+
+            weights *= np.exp(estimator_weight * misclassified)  # Atualizando os pesos corretamente
             weights /= np.sum(weights)  # Normalizando os pesos
 
             self.estimators.append(estimator)
             self.estimator_weights.append(estimator_weight)
 
-    def predict(self, X):
-        n_samples = X.shape[0]
+    def predict(self, x_predict):
+        n_samples = x_predict.shape[0]
         y_pred = np.zeros(n_samples)
 
         for estimator, estimator_weight in zip(self.estimators, self.estimator_weights):
-            print(f'Estimator: {estimator.predict(X)}, Weight: {estimator_weight}')
-            y_pred += estimator_weight * estimator.predict(X)
+            y_pred += estimator_weight * estimator.predict(x_predict)
 
         return np.sign(y_pred)
+
+
 
 
 def get_data():
@@ -64,7 +65,7 @@ def get_data():
             # append line data to data list, but the last element is the class
             x[i] = (line_splitted[:-1])
             # append the last elem to y
-            if line_splitted[-1].strip() == 'positive\n':
+            if line_splitted[-1].strip() == 'positive':
                 y[i] = 1
             else:
                 y[i] = 0
