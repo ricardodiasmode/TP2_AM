@@ -4,11 +4,11 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 
 
-def get_estimator(in_estimator_type, in_tree_depth):
+def get_estimator(in_estimator_type, in_estimator_param):
     if in_estimator_type == 'tree':
-        return DecisionTreeClassifier(max_depth=in_tree_depth)
+        return DecisionTreeClassifier(max_depth=in_estimator_param)
     elif in_estimator_type == 'svm':
-        return SVC(kernel='linear', C=0.8)
+        return SVC(kernel='linear', C=in_estimator_param)
 
 
 class AdaBoost:
@@ -17,13 +17,13 @@ class AdaBoost:
         self.estimators = []
         self.estimator_weights = []
 
-    def fit(self, x, y, in_tree_depth, estimator_type):
+    def fit(self, x, y, in_estimator_param, in_estimator_type):
         n_samples = x.shape[0]
         weights = np.ones(n_samples) / n_samples  # Inicializando os pesos igualmente
 
         for _ in range(self.n_estimators):
             error = 0
-            estimator = get_estimator(estimator_type, in_tree_depth)
+            estimator = get_estimator(in_estimator_type, in_estimator_param)
 
             estimator.fit(x, y, sample_weight=weights)  # Treinando o estimador com os pesos
 
@@ -127,14 +127,14 @@ n_folds = 5
 # Testando a acurácia em função do número de estimadores e do tipo
 accuracy = []
 for estimator_type in ['tree', 'svm']:
-    for estimators in range(3, 10):
+    for estimators in range(3, 50):
         tree_depth = 3
         accuracy.append(k_fold_cross_validation(features, labels, n_folds, estimators, tree_depth, estimator_type))
         plt.plot(estimators, accuracy[estimators - 3], 'bo')
     plt.xlabel('Número de estimadores')
     plt.ylabel('Acurácia')
     plt.title('Acurácia x Número de estimadores' + ' (' + estimator_type + ')')
-    plt.axis([2, 10, 0.5, 1])
+    plt.axis([2, 50, 0.5, 1])
     plt.show()
 
 # Testando a acurácia em função da profundidade da árvore
@@ -147,3 +147,28 @@ plt.ylabel('Acurácia')
 plt.title('Acurácia x Profundidade da árvore')
 plt.axis([0, 25, 0.5, 1])
 plt.show()
+
+# Testando a acurácia em função do número de folds
+for n_folds in range(2, 30):
+    estimators = 3
+    tree_depth = 3
+    accuracy.append(k_fold_cross_validation(features, labels, n_folds, estimators, tree_depth, 'tree'))
+    plt.plot(n_folds, accuracy[n_folds - 2], 'bo')
+plt.xlabel('Número de folds')
+plt.ylabel('Acurácia')
+plt.title('Acurácia x Número de folds')
+plt.axis([1, 30, 0.5, 1])
+plt.show()
+
+c_array = [0.1, 0.3, 0.6, 0.9]
+# Testando a acurácia em função do C
+for c in c_array:
+    estimators = 3
+    accuracy.append(k_fold_cross_validation(features, labels, n_folds, estimators, c, 'svm'))
+    plt.plot(c, accuracy[c_array.index(c)], 'bo')
+plt.xlabel('C')
+plt.ylabel('Acurácia')
+plt.title('Acurácia x C')
+plt.axis([0, 1, 0.5, 1])
+plt.show()
+
